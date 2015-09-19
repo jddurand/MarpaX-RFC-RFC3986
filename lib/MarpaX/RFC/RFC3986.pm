@@ -396,7 +396,7 @@ IPv4address     ::= <dec octet> '.' <dec octet> '.' <dec octet> '.' <dec octet>
 #
 # These rules are informative: they are not productive
 #
-<reserved>      ::= <gen delims> | <sub delims> 
+<reserved>      ::= <gen delims> | <sub delims>
 <gen delims>    ::= [:/?#\[\]@]
 #
 # No perl meta-character, just to be sure
