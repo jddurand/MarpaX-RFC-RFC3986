@@ -92,11 +92,11 @@ The variable given in input to C<new()>.
 
 =head2 $self->scheme --> Str|Undef
 
-The URI scheme. Can be 
+The URI scheme. Can be undefined.
 
 =head2 $self->authority --> Str|Undef
 
-The URI authority.
+The URI authority. Can be undefined.
 
 =head2 $self->path --> Str
 
@@ -104,39 +104,43 @@ The URI path. Note that an URI always have a path, although it can be empty.
 
 =head2 $self->query --> Str|Undef
 
-The URI query.
+The URI query. Can be undefined.
 
 =head2 $self->fragment --> Str|Undef
 
-The URI fragment.
+The URI fragment. Can be undefined.
 
 =head2 $self->hier_part --> Str|Undef
 
-The URI hier part.
+The URI hier part. Can be undefined.
 
 =head2 $self->userinfo --> Str|Undef
 
-The URI userinfo.
+The URI userinfo. Can be undefined.
 
 =head2 $self->host --> Str|Undef
 
-The URI host.
+The URI host. Can be undefined.
 
 =head2 $self->port --> Str|Undef
 
-The URI port.
+The URI port. Can be undefined.
 
 =head2 $self->relative_part --> Str|Undef
 
-The URI relative part.
+The URI relative part. Can be undefined.
 
 =head2 $self->ip_literal --> Str|Undef
 
-The URI IP literal.
+The URI IP literal. Can be undefined.
 
 =head2 $self->zoneid --> Str|Undef
 
-The URI IP's zone id.
+The URI IP's zone id. Can be undefined.
+
+=head2 $self->is_absolute --> Bool
+
+Returns a true value if the URI is absolute, false otherwise.
 
 =head1 SEE ALSO
 
@@ -144,7 +148,7 @@ L<Marpa::R2>
 
 L<URI>
 
-L<Data::Validation::URI>
+L<Data::Validate::URI>
 
 L<Uniform Resource Identifier (URI): Generic Syntax|http://tools.ietf.org/html/rfc3986>
 
