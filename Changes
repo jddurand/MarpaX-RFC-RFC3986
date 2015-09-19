@@ -1,0 +1,8 @@
+Changelog for MarpaX-RFC-RFC3986
+
+0.001 2015-09-19T21:22:42
+ [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - t/utitest.pl: add is_absolute test
+ - xtest
+ - xtest dist.ini
+ - Initial commit

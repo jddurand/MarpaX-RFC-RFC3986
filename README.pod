@@ -1,0 +1,183 @@
+=pod
+
+=encoding UTF-8
+
+=head1 NAME
+
+MarpaX::RFC::RFC3986 - Uniform Resource Identifier (URI): Generic Syntax - Marpa Parser
+
+=head1 VERSION
+
+version 0.001
+
+=head1 SYNOPSIS
+
+    use MarpaX::RFC::RFC3986;
+    use Try::Tiny;
+    use Data::Dumper;
+
+    print Dumper(MarpaX::RFC::RFC3986->new('http://www.perl.org'));
+
+    try {
+      print STDERR "\nThe following is an expected failure:\n";
+      MarpaX::RFC::RFC3986->new('http://invalid##');
+    } catch {
+      print STDERR "$_\n";
+      return;
+    }
+
+=head1 DESCRIPTION
+
+This module parses an URI reference as per RFC3986 STD 66, with RFC6874 update about IPv6 Zone Identifiers. It is not intended as a replacement of the URI module, but more for data validation using a strict grammar with good error reporting.
+
+=head1 URI DESCRIPTION
+
+Quoted from the RFC here is the overall structure of an URI that will help understand the meaning of the methods thereafter:
+
+         foo://example.com:8042/over/there?name=ferret#nose
+         \_/   \______________/\_________/ \_________/ \__/
+          |           |            |            |        |
+       scheme     authority       path        query   fragment
+          |   _____________________|__
+         / \ /                        \
+         urn:example:animal:ferret:nose
+
+The grammar is parsing both absolute URI and relative URI, the corresponding start rule being named a URI reference.
+
+An absolute URI has the following structure:
+
+         URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
+
+while a relative URI is splitted into:
+
+         relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
+
+Back to the overall structure, the authority is:
+
+         authority   = [ userinfo "@" ] host [ ":" port ]
+
+where the host can be an IP-literal with Zone information:
+
+         IP-literal = "[" ( IPv6address / IPv6addrz / IPvFuture  ) "]"
+
+         ZoneID = 1*( unreserved / pct-encoded )
+
+         IPv6addrz = IPv6address "%25" ZoneID
+
+=head1 CLASS METHODS
+
+=head2 MarpaX::RFC::RFC3986->new(@options) --> InstanceOf['MarpaX::RFC::RFC3986']
+
+Instantiate a new object. Usage is either C<MarpaX::RFC::RFC3986-E<gt>new(value =E<gt> $url)> or C<MarpaX::RFC::RFC3986-E<gt>new($url)>. This method will croak if the the C<$url> parameter cannot coerce to a string nor is a valid URI. The variable C<$self> is used below to refer to this object instance.
+
+=head2 MarpaX::RFC::RFC3986->grammar --> InstanceOf['Marpa::R2::Scanless::G']
+
+A Marpa::R2::Scanless::G instance, hosting the computed grammar. This is a class variable, i.e. works also with C<$self>.
+
+=head2 MarpaX::RFC::RFC3986->bnf --> Str
+
+The BNF grammar used to parse an URI. This is a class variable, i.e. works also with C<$self>.
+
+=head1 OBJECT METHODS
+
+=head2 $self->value --> Str
+
+The variable given in input to C<new()>.
+
+=head2 $self->scheme --> Str|Undef
+
+The URI scheme. Can be undefined.
+
+=head2 $self->authority --> Str|Undef
+
+The URI authority. Can be undefined.
+
+=head2 $self->path --> Str
+
+The URI path. Note that an URI always have a path, although it can be empty.
+
+=head2 $self->query --> Str|Undef
+
+The URI query. Can be undefined.
+
+=head2 $self->fragment --> Str|Undef
+
+The URI fragment. Can be undefined.
+
+=head2 $self->hier_part --> Str|Undef
+
+The URI hier part. Can be undefined.
+
+=head2 $self->userinfo --> Str|Undef
+
+The URI userinfo. Can be undefined.
+
+=head2 $self->host --> Str|Undef
+
+The URI host. Can be undefined.
+
+=head2 $self->port --> Str|Undef
+
+The URI port. Can be undefined.
+
+=head2 $self->relative_part --> Str|Undef
+
+The URI relative part. Can be undefined.
+
+=head2 $self->ip_literal --> Str|Undef
+
+The URI IP literal. Can be undefined.
+
+=head2 $self->zoneid --> Str|Undef
+
+The URI IP's zone id. Can be undefined.
+
+=head2 $self->is_absolute --> Bool
+
+Returns a true value if the URI is absolute, false otherwise.
+
+=head1 SEE ALSO
+
+L<Marpa::R2>
+
+L<URI>
+
+L<Data::Validate::URI>
+
+L<Uniform Resource Identifier (URI): Generic Syntax|http://tools.ietf.org/html/rfc3986>
+
+L<Representing IPv6 Zone Identifiers in Address Literals and Uniform Resource Identifiers|http://tools.ietf.org/html/rfc6874>
+
+L<URI Design and Ownership|http://tools.ietf.org/html/rfc7320>
+
+=for :stopwords cpan testmatrix url annocpan anno bugtracker rt cpants kwalitee diff irc mailto metadata placeholders metacpan
+
+=head1 SUPPORT
+
+=head2 Bugs / Feature Requests
+
+Please report any bugs or feature requests through the issue tracker
+at L<https://rt.cpan.org/Public/Dist/Display.html?Name=MarpaX-RFC-RFC3986>.
+You will be notified automatically of any progress on your issue.
+
+=head2 Source Code
+
+This is open source software.  The code repository is available for
+public review and contribution under the terms of the license.
+
+L<https://github.com/jddurand/marpax-rfc-rfc3986>
+
+  git clone git://github.com/jddurand/marpax-rfc-rfc3986.git
+
+=head1 AUTHOR
+
+Jean-Damien Durand <jeandamiendurand@free.fr>
+
+=head1 COPYRIGHT AND LICENSE
+
+This software is copyright (c) 2015 by Jean-Damien Durand.
+
+This is free software; you can redistribute it and/or modify it under
+the same terms as the Perl 5 programming language system itself.
+
+=cut
