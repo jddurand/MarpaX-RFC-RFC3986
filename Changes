@@ -1,7 +1,8 @@
 Changelog for MarpaX-RFC-RFC3986
 
-0.001 2015-09-19T21:22:42
+0.001 2015-09-19T21:23:32
  [Jean-Damien Durand <jeandamiendurand@free.fr>]
+ - Changes/META.json/README.pod for the 1st release...
  - t/utitest.pl: add is_absolute test
  - xtest
  - xtest dist.ini
