@@ -22,5 +22,5 @@ our @URI = (
            );
 
 foreach (@URI) {
-  ok(MarpaX::RFC::RFC3986->new($_), $_);
+  ok(MarpaX::RFC::RFC3986->new($_)->is_absolute, $_);
 }
