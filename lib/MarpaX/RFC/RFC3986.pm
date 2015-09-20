@@ -78,7 +78,7 @@ The Zone Identifier is an extension to original RFC3986, and is defined in RFC68
 
 =head2 MarpaX::RFC::RFC3986->new(@options --> InstanceOf['MarpaX::RFC::RFC3986'])
 
-Instantiate a new object. Usage is either C<MarpaX::RFC::RFC3986-E<gt>new(value =E<gt> $url)> or C<MarpaX::RFC::RFC3986-E<gt>new($url)>. This method will croak if the the C<$url> parameter cannot coerce to a string nor is a valid URI. The variable C<$self> is used below to refer to this object instance.
+Instantiate a new object. Usage is either C<MarpaX::RFC::RFC3986-E<gt>new(value =E<gt> $uri)> or C<MarpaX::RFC::RFC3986-E<gt>new($uri)>. This method will croak if the the C<$uri> parameter cannot coerce to a string nor is a valid URI. The variable C<$self> is used below to refer to this object instance.
 
 =head2 MarpaX::RFC::RFC3986->grammar( --> InstanceOf['Marpa::R2::Scanless::G'])
 
