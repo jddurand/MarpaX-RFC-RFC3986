@@ -79,7 +79,7 @@
    "provides" : {
       "MarpaX::RFC::RFC3986" : {
          "file" : "lib/MarpaX/RFC/RFC3986.pm",
-         "version" : "0.001"
+         "version" : "0.002"
       }
    },
    "release_status" : "stable",
@@ -95,6 +95,6 @@
          "web" : "https://github.com/jddurand/marpax-rfc-rfc3986"
       }
    },
-   "version" : "0.001"
+   "version" : "0.002"
 }
 
