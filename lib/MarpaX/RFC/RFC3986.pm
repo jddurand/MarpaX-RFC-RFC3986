@@ -62,7 +62,11 @@ Back to the overall structure, the authority is:
 
          authority   = [ userinfo "@" ] host [ ":" port ]
 
-where the host can be an IP-literal with Zone information:
+where the host can be an IP-literal with Zone information, and IPV4 address or a registered name:
+
+         host = IP-literal / IPv4address / reg-name
+
+The Zone Identifier is an extension to original RFC3986, and is defined in RFC6874:
 
          IP-literal = "[" ( IPv6address / IPv6addrz / IPvFuture  ) "]"
 
