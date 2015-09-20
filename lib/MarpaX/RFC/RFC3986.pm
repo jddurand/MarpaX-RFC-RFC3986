@@ -54,7 +54,7 @@ An absolute URI has the following structure:
 
          URI = scheme ":" hier-part [ "?" query ] [ "#" fragment ]
 
-while a relative URI is splitted into:
+while a relative URI is split into:
 
          relative-ref  = relative-part [ "?" query ] [ "#" fragment ]
 
@@ -72,73 +72,73 @@ where the host can be an IP-literal with Zone information:
 
 =head1 CLASS METHODS
 
-=head2 MarpaX::RFC::RFC3986->new(@options) --> InstanceOf['MarpaX::RFC::RFC3986']
+=head2 MarpaX::RFC::RFC3986->new(@options --> InstanceOf['MarpaX::RFC::RFC3986'])
 
 Instantiate a new object. Usage is either C<MarpaX::RFC::RFC3986-E<gt>new(value =E<gt> $url)> or C<MarpaX::RFC::RFC3986-E<gt>new($url)>. This method will croak if the the C<$url> parameter cannot coerce to a string nor is a valid URI. The variable C<$self> is used below to refer to this object instance.
 
-=head2 MarpaX::RFC::RFC3986->grammar --> InstanceOf['Marpa::R2::Scanless::G']
+=head2 MarpaX::RFC::RFC3986->grammar( --> InstanceOf['Marpa::R2::Scanless::G'])
 
 A Marpa::R2::Scanless::G instance, hosting the computed grammar. This is a class variable, i.e. works also with C<$self>.
 
-=head2 MarpaX::RFC::RFC3986->bnf --> Str
+=head2 MarpaX::RFC::RFC3986->bnf( --> Str)
 
 The BNF grammar used to parse an URI. This is a class variable, i.e. works also with C<$self>.
 
 =head1 OBJECT METHODS
 
-=head2 $self->value --> Str
+=head2 $self->value( --> Str)
 
 The variable given in input to C<new()>.
 
-=head2 $self->scheme --> Str|Undef
+=head2 $self->scheme( --> Str|Undef)
 
 The URI scheme. Can be undefined.
 
-=head2 $self->authority --> Str|Undef
+=head2 $self->authority( --> Str|Undef)
 
 The URI authority. Can be undefined.
 
-=head2 $self->path --> Str
+=head2 $self->path( --> Str)
 
 The URI path. Note that an URI always have a path, although it can be empty.
 
-=head2 $self->query --> Str|Undef
+=head2 $self->query( --> Str|Undef)
 
 The URI query. Can be undefined.
 
-=head2 $self->fragment --> Str|Undef
+=head2 $self->fragment( --> Str|Undef)
 
 The URI fragment. Can be undefined.
 
-=head2 $self->hier_part --> Str|Undef
+=head2 $self->hier_part( --> Str|Undef)
 
 The URI hier part. Can be undefined.
 
-=head2 $self->userinfo --> Str|Undef
+=head2 $self->userinfo( --> Str|Undef)
 
 The URI userinfo. Can be undefined.
 
-=head2 $self->host --> Str|Undef
+=head2 $self->host( --> Str|Undef)
 
 The URI host. Can be undefined.
 
-=head2 $self->port --> Str|Undef
+=head2 $self->port( --> Str|Undef)
 
 The URI port. Can be undefined.
 
-=head2 $self->relative_part --> Str|Undef
+=head2 $self->relative_part( --> Str|Undef)
 
 The URI relative part. Can be undefined.
 
-=head2 $self->ip_literal --> Str|Undef
+=head2 $self->ip_literal( --> Str|Undef)
 
 The URI IP literal. Can be undefined.
 
-=head2 $self->zoneid --> Str|Undef
+=head2 $self->zoneid( --> Str|Undef)
 
 The URI IP's zone id. Can be undefined.
 
-=head2 $self->is_absolute --> Bool
+=head2 $self->is_absolute( --> Bool)
 
 Returns a true value if the URI is absolute, false otherwise.
 
