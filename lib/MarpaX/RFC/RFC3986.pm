@@ -138,6 +138,14 @@ The URI IP literal. Can be undefined.
 
 The URI IP's zone id. Can be undefined.
 
+=head2 $self->ipv4address( --> Str|Undef)
+
+The URI IP Version 4 address. Can be undefined.
+
+=head2 $self->reg_name( --> Str|Undef)
+
+The URI registered name. Can be undefined.
+
 =head2 $self->is_absolute( --> Bool)
 
 Returns a true value if the URI is absolute, false otherwise.
@@ -179,6 +187,8 @@ has port          => (is => 'ro', isa => Str|Undef,     default => undef,      w
 has relative_part => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_relative_part');
 has ip_literal    => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ip_literal');
 has zoneid        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_zoneid' );
+has ipv4address   => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ipv4address');
+has reg_name      => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_reg_name');
 
 sub BUILDARGS {
   my ($class, @args) = @_;
@@ -225,6 +235,8 @@ sub _marpa_port          { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return
 sub _marpa_relative_part { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_relative_part ($self->_marpa_concat(@_)); }
 sub _marpa_ip_literal    { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_ip_literal    ($self->_marpa_concat(@_)); }
 sub _marpa_zoneid        { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_zoneid        ($self->_marpa_concat(@_)); }
+sub _marpa_ipv4address   { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_ipv4address   ($self->_marpa_concat(@_)); }
+sub _marpa_reg_name      { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_reg_name      ($self->_marpa_concat(@_)); }
 
 1;
 __DATA__
@@ -344,7 +356,7 @@ inaccessible is ok by default
 <ls32>          ::= <h16> ':' <h16>
                   | <IPv4address>
 
-IPv4address     ::= <dec octet> '.' <dec octet> '.' <dec octet> '.' <dec octet>
+IPv4address     ::= <dec octet> '.' <dec octet> '.' <dec octet> '.' <dec octet> action => MarpaX::RFC::RFC3986::_marpa_ipv4address
 
 <dec octet>     ::=                      DIGIT # 0-9
                   |      [\x{31}-\x{39}] DIGIT # 10-99
@@ -353,7 +365,7 @@ IPv4address     ::= <dec octet> '.' <dec octet> '.' <dec octet> '.' <dec octet>
                   | '25' [\x{30}-\x{35}]       # 250-255
 
 <reg name unit> ::= <unreserved> | <pct encoded> | <sub delims>
-<reg name>      ::= <reg name unit>*
+<reg name>      ::= <reg name unit>*                                 action => MarpaX::RFC::RFC3986::_marpa_reg_name
 
 <path>          ::= <path abempty>    # begins with "/" or is empty
                   | <path absolute>   # begins with "/" but not "//"
