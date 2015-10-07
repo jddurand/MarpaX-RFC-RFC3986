@@ -217,9 +217,10 @@ sub BUILD {
 sub is_absolute {
   my ($self) = @_;
   #
-  ## No need to reparse. An absolute URI is when scheme and hier_part are defined
+  # No need to reparse. An absolute URI is when scheme and hier_part are defined,
+  # and fragment is undefined
   #
-  return Str->check($self->scheme) && Str->check($self->hier_part);
+  return Str->check($self->scheme) && Str->check($self->hier_part) && Undef->check($self->fragment);
 }
 
 #
