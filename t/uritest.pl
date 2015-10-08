@@ -7,7 +7,7 @@ BEGIN {
     use_ok( 'MarpaX::RFC::RFC3986' ) || print "Bail out!\n";
 }
 
-our @URI = (
+our @URI_ABSOLUTE_TEST = (
             [ "http://localhost/"                                   => 1 ],
             [ "ftp://ftp.is.co.za/rfc/rfc1808.txt"                  => 1 ],
             [ "http://www.ietf.org/rfc/rfc2396.txt"                 => 1 ],
@@ -21,8 +21,17 @@ our @URI = (
             [ "urn:example:animal:ferret:nose"                      => 1 ]
            );
 
-foreach (@URI) {
+our @URI_CANONICAL_TEST = (
+            [ '/a/b/c/./../../g'                                    => '/a/g' ],
+            [ 'mid/content=5/../6'                                  => 'mid/6']
+           );
+
+foreach (@URI_ABSOLUTE_TEST) {
   ok(MarpaX::RFC::RFC3986->new($_->[0])->is_absolute == $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->is_absolute == ' . $_->[1]);
+}
+
+foreach (@URI_CANONICAL_TEST) {
+  ok(MarpaX::RFC::RFC3986->new($_->[0])->canonical eq $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->canonical eq ' . $_->[1]);
 }
 
 sub _safePrint {

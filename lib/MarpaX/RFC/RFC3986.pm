@@ -5,6 +5,7 @@ use Types::Standard -all;
 use strict;
 use diagnostics;
 use Marpa::R2;
+use MooX::HandlesVia;
 
 # ABSTRACT: Uniform Resource Identifier (URI): Generic Syntax - Marpa Parser
 
@@ -172,7 +173,7 @@ L<URI Design and Ownership|http://tools.ietf.org/html/rfc7320>
 
 our $DATA = do { local $/; <DATA>; };
 
-has value         => (is => 'ro', isa => Str, required => 1 );
+has value         => (is => 'rwp', isa => Str, required => 1, trigger => 1);
 
 class_has grammar => (is => 'ro', isa => InstanceOf['Marpa::R2::Scanless:G'], default => sub { return Marpa::R2::Scanless::G->new({ source => \$DATA }) } );
 
@@ -193,24 +194,222 @@ has ip_literal    => (is => 'ro', isa => Str|Undef,     default => undef,      w
 has zoneid        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_zoneid' );
 has ipv4address   => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ipv4address');
 has reg_name      => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_reg_name');
+has canonical     => (is => 'rwp', isa => Str, clearer => 1);   # Will be automatically setted via BUILD
+
+sub _clear_canonical {
+  my ($self) = @_;
+  $self->_set_canonical('');
+}
+
+#
+# Normalization has specific rules on:
+# - Percent-Encoding
+# - Path Segment
+# - Scheme
+# - Protocol
+# Therefore all these components have dedicated normalization callbacks, writen in the _concat trigger
+#
+has _concat               => (is => 'rw', isa => Str, trigger => 1, writer => '_set__concat');
+has _scheme_normalization => (is => 'rw', isa => HashRef[CodeRef], default => sub { {}},
+                              handles_via => 'Hash',
+                              handles => {
+                                          _exists_scheme_normalization => 'exists',
+                                          _get_scheme_normalization => 'get',
+                                         }
+                             );
+has _protocol_normalization => (is => 'rw', isa => HashRef[CodeRef], default => sub { {}},
+                                handles_via => 'Hash',
+                                handles => {
+                                            _exists_protocol_normalization => 'exists',
+                                            _get_protocol_normalization => 'get',
+                                           }
+                               );
+
+sub _trigger__concat {
+  my ($self, @parts) = @_;
+
+  my $string = join('', @parts);   # ==> can never be undef
+  my $normalized;
+
+  my $rule_id = $Marpa::R2::Context::rule;
+  my $slg     = $Marpa::R2::Context::slg;
+  my ($lhs, @rhs) = map { $slg->symbol_display_form($_) } $slg->rule_expand($rule_id);
+
+  if ($lhs eq '<pct encoded>') {
+    #
+    # 6.2.2.1.  Case Normalization
+    # ----------------------------
+    # For all URIs, the hexadecimal digits within a percent-encoding
+    # triplet (e.g., "%3a" versus "%3A") are case-insensitive and therefore
+    # should be normalized to use uppercase letters for the digits A-F.
+    #
+    $normalized = uc($string);
+    #
+    # 6.2.2.2.  Percent-Encoding Normalization
+    # ----------------------------------------
+    # (These URIs) should be normalized by decoding any percent-encoded octet that corresponds
+    # to an unreserved character, as described in Section 2.3.
+    #
+    # No need to call the grammar again, we know what they are:
+    # <unreserved>    ::= ALPHA | DIGIT | [-._~]
+    # ALPHA         ::= [A-Za-z]
+    # DIGIT         ::= [0-9]
+    #
+    my $char = $normalized;
+    substr($char, 0, 1, '');    # Remove the '%'
+    $char = chr(hex($char));
+    if ($char =~ /[A-Za-z0-9._~-]/) {
+      $normalized = $char;
+    }
+  }
+  elsif ($lhs eq '<path abempty>'  ||
+         $lhs eq '<path absolute>' ||
+         $lhs eq '<path noscheme>' ||
+         $lhs eq '<path rootless>' ||
+         $lhs eq '<path empty>') {
+    #
+    # 6.2.2.3.  Path Segment Normalization
+    # ------------------------------------
+    # URI normalizers should remove dot-segments by applying the
+    # remove_dot_segments algorithm to the path
+    #
+    $normalized = $self->_remove_dot_segments($string);
+  } else {
+    $normalized = $string;
+  }
+  if ($self->_exists_scheme_normalization($lhs)) {
+    #
+    # 6.2.3.  Scheme-Based Normalization
+    #
+    my $codeRef = $self->_get_scheme_normalization($lhs);
+    $normalized = $self->$codeRef($string);
+  }
+  if ($self->_exists_protocol_normalization($lhs)) {
+    #
+    # 6.2.4.  Protocol-Based Normalization
+    #
+    my $codeRef = $self->_get_protocol_normalization($lhs);
+    $normalized = $self->$codeRef($string);
+  }
+
+  return $self->_set_canonical($normalized);
+}
+
+sub _remove_dot_segments {
+  my ($self, $input) = @_;
+  #
+  # 1.  The input buffer is initialized with the now-appended path
+  # components and the output buffer is initialized to the empty
+  # string.
+  #
+  my $output = '';
+  #
+  # 2.  While the input buffer is not empty, loop as follows:
+  #
+  my $i = 0;
+  printf STDERR "%-10s %-30s %-30s\n", "STEP", "OUTPUT BUFFER", "INPUT BUFFER";
+  my $step = ++$i;
+  while (length($input)) {
+    printf STDERR "%-10s %-30s %-30s\n", $step, $output, $input;
+    $step = ++$i;
+    #
+    # A. If the input buffer begins with a prefix of "../" or "./",
+    #    then remove that prefix from the input buffer; otherwise,
+    #
+    if (index($input, '../') == 0) {
+      substr($input, 0, 3, '');
+      $step .= 'A';
+    }
+    elsif (index($input, './') == 0) {
+      substr($input, 0, 2, '');
+      $step .= 'A';
+    }
+    #
+    # B. if the input buffer begins with a prefix of "/./" or "/.",
+    #    where "." is a complete path segment, then replace that
+    #    prefix with "/" in the input buffer; otherwise,
+    #
+    elsif (index($input, '/./') == 0) {
+      substr($input, 0, 3, '/');
+      $step .= 'B';
+    }
+    elsif ($input =~ /^\/\.(?:[^\/]|\z)/) {            # Take care this can confuse the other test on '/../ or '/..'
+      substr($input, 0, 2, '/');
+      $step .= 'B';
+    }
+    #
+    # C. if the input buffer begins with a prefix of "/../" or "/..",
+    #    where ".." is a complete path segment, then replace that
+    #    prefix with "/" in the input buffer and remove the last
+    #    segment and its preceding "/" (if any) from the output
+    #    buffer; otherwise,
+    #
+    elsif (index($input, '/../') == 0) {
+      substr($input, 0, 4, '/');
+      $output =~ s/\/?[^\/]*\z//;
+      $step .= 'C';
+    }
+    elsif ($input =~ /^\/\.\.(?:[^\/]|\z)/) {
+      substr($input, 0, 3, '/');
+      $output =~ s/\/?[^\/]*\z//;
+      $step .= 'C';
+    }
+    #
+    # D. if the input buffer consists only of "." or "..", then remove
+    #    that from the input buffer; otherwise,
+    #
+    elsif (($input eq '.') || ($input eq '..')) {
+      $input = '';
+      $step .= 'D';
+    }
+    #
+    # E. move the first path segment in the input buffer to the end of
+    #    the output buffer, including the initial "/" character (if
+    #    any) and any subsequent characters up to, but not including,
+    #    the next "/" character or the end of the input buffer.
+    #
+    #    Note: "or the end of the input buffer" ?
+    #
+    else {
+      $input =~ /^\/?([^\/]*)/;                            # This will always match
+      $output .= substr($input, $-[0], $+[0] - $-[0], ''); # Note that perl has no problem saying length is zero
+      $step .= 'E';
+    }
+  }
+  #
+  # 3. Finally, the output buffer is returned as the result of
+  #    remove_dot_segments.
+  #
+  return $output;
+}
 
 sub BUILDARGS {
   my ($class, @args) = @_;
-
   unshift(@args, 'value') if (@args % 2 == 1);
-
   return { @args };
 };
 
 sub BUILD {
   my ($self) = @_;
+  $self->_parse;
+  return;
+}
+
+sub _trigger_value {
+  my ($self, $value) = @_;
+  $self->_parse;
+  return;
+}
+
+sub _parse {
+  my ($self) = @_;
+  $self->_clear_canonical;
   #
   # This hack just to avoid recursivity: we do not want Marpa to
   # call another new() but operate on our instance immediately
   #
   local $MarpaX::RFC::RFC3986::SELF = $self;
   $self->grammar->parse(\$self->value, { ranking_method => 'high_rule_only' });
-
   return;
 }
 
@@ -226,13 +425,12 @@ sub is_absolute {
 #
 # Grammar rules
 #
-sub _marpa_concat        { shift;                                         return join('', @_); }
+sub _marpa_concat        { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set__concat       (join('', @_));             }
 sub _marpa_scheme        { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_scheme        ($self->_marpa_concat(@_)); }
 sub _marpa_authority     { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_authority     ($self->_marpa_concat(@_)); }
 sub _marpa_path          { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_path          ($self->_marpa_concat(@_)); }
 sub _marpa_query         { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_query         ($self->_marpa_concat(@_)); }
 sub _marpa_fragment      { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_fragment      ($self->_marpa_concat(@_)); }
-
 sub _marpa_hier_part     { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_hier_part     ($self->_marpa_concat(@_)); }
 sub _marpa_userinfo      { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_userinfo      ($self->_marpa_concat(@_)); }
 sub _marpa_host          { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_host          ($self->_marpa_concat(@_)); }
