@@ -1,7 +1,7 @@
 #!perl -T
 use strict;
 use warnings FATAL => 'all';
-use Test::More tests => 12;
+use Test::More tests => 14;
 
 BEGIN {
     use_ok( 'MarpaX::RFC::RFC3986' ) || print "Bail out!\n";
@@ -28,12 +28,12 @@ our @URI_CANONICAL_TEST = (
 
 foreach (@URI_ABSOLUTE_TEST) {
   my $got;
-  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->is_absolute) == $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->is_absolute == ' . $_->[1] . ", but got $got");
+  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->is_absolute) == $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->is_absolute returns ' . $_->[1] . " == $got ?");
 }
 
 foreach (@URI_CANONICAL_TEST) {
   my $got;
-  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->canonical) eq $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->canonical eq ' . $_->[1] . ", but got $got");
+  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->canonical) eq $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->canonical returns ' . $_->[1] . " eq $got ?");
 }
 
 sub _safePrint {

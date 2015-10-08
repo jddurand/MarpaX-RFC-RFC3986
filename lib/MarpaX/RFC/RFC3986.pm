@@ -173,59 +173,38 @@ L<URI Design and Ownership|http://tools.ietf.org/html/rfc7320>
 
 our $DATA = do { local $/; <DATA>; };
 
-has value         => (is => 'rwp', isa => Str, required => 1, trigger => 1);
-
-class_has grammar => (is => 'ro', isa => InstanceOf['Marpa::R2::Scanless:G'], default => sub { return Marpa::R2::Scanless::G->new({ source => \$DATA }) } );
-
-class_has bnf     => (is => 'ro', isa => Str,                                 default => $DATA );
-
-has scheme        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_scheme');
-has authority     => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_authority');
-has path          => (is => 'ro', isa => Str,           default => '',         writer => '_set_path');        # There is always a path in an URI
-has query         => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_query');
-has fragment      => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_fragment');
-
-has hier_part     => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_hier_part');
-has userinfo      => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_userinfo');
-has host          => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_host');
-has port          => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_port');
-has relative_part => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_relative_part');
-has ip_literal    => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ip_literal');
-has zoneid        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_zoneid' );
-has ipv4address   => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ipv4address');
-has reg_name      => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_reg_name');
-has canonical     => (is => 'rwp', isa => Str, clearer => 1);             # Will be automatically setted via BUILD
-has _last_canonical => (is => 'rw', isa => HashRef[Str],
-                        handles_via => 'Hash',
-                        handles => {
-                                    _get_last_canonical => 'get',
-                                    _clear_last_canonical => 'clear'
-                                   }
-                       );                 # Will be automatically setted via BUILD
-
-sub _clear_canonical {
-  my ($self) = @_;
-  $self->_set_canonical('');
-  $self->_last_canonical({});
-}
-
+# -------------------
+# EXTERNAL ATTRIBUTES
+# -------------------
+has value           => (is => 'rwp', isa => Str, required => 1, trigger => 1);
+class_has grammar   => (is => 'ro', isa => InstanceOf['Marpa::R2::Scanless:G'], default => sub { return Marpa::R2::Scanless::G->new({ source => \$DATA }) } );
+class_has bnf       => (is => 'ro', isa => Str,                                 default => $DATA );
+has scheme          => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_scheme');
+has authority       => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_authority');
+has path            => (is => 'ro', isa => Str,           default => '',         writer => '_set_path');        # There is always a path in an URI
+has query           => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_query');
+has fragment        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_fragment');
+has hier_part       => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_hier_part');
+has userinfo        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_userinfo');
+has host            => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_host');
+has port            => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_port');
+has relative_part   => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_relative_part');
+has ip_literal      => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ip_literal');
+has zoneid          => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_zoneid' );
+has ipv4address     => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ipv4address');
+has reg_name        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_reg_name');
 #
-# Normalization has specific rules on:
-# - Percent-Encoding
-# - Path Segment
-# - Scheme
-# - Protocol
-# Therefore all these components have dedicated normalization callbacks, writen in the _concat trigger
+# Normalization have specific rules on Path Segment and Protocol, not under our control, so we provide methods
+# to attributes that a subclass should override.
 #
-has _concat               => (is => 'rw', isa => Str, trigger => 1, writer => '_set__concat');
-has _scheme_normalization => (is => 'rw', isa => HashRef[CodeRef], default => sub { {}},
-                              handles_via => 'Hash',
-                              handles => {
-                                          _exists_scheme_normalization => 'exists',
-                                          _get_scheme_normalization => 'get',
-                                         }
-                             );
-has _protocol_normalization => (is => 'rw', isa => HashRef[CodeRef], default => sub { {}},
+has scheme_normalization => (is => 'ro', isa => HashRef[CodeRef], default => sub { {}},
+                             handles_via => 'Hash',
+                             handles => {
+                                         _exists_scheme_normalization => 'exists',
+                                         _get_scheme_normalization => 'get',
+                                        }
+                            );
+has protocol_normalization => (is => 'ro', isa => HashRef[CodeRef], default => sub { {}},
                                 handles_via => 'Hash',
                                 handles => {
                                             _exists_protocol_normalization => 'exists',
@@ -233,15 +212,20 @@ has _protocol_normalization => (is => 'rw', isa => HashRef[CodeRef], default => 
                                            }
                                );
 
-sub _trigger__concat {
-  my ($self, $string) = @_;
+# -------
+# METHODS
+# -------
+sub canonical {                        # canonical is an on-demand parsing
+  my ($self) = @_;
+  return ${$self->_parse(1)};
+}
+
+sub _normalize {
+  my ($self, $normalized) = @_;
 
   my $rule_id = $Marpa::R2::Context::rule;
   my $slg     = $Marpa::R2::Context::slg;
   my ($lhs, @rhs) = map { $slg->symbol_display_form($_) } $slg->rule_expand($rule_id);
-
-  print STDERR "$lhs ::= @rhs\n";
-  my $normalized = join('', map {$self->_get_last_canonical($_)} @rhs);
 
   if ($lhs eq '<pct encoded>') {
     #
@@ -298,29 +282,33 @@ sub _trigger__concat {
     $normalized = $self->$codeRef($normalized);
   }
 
-  print STDERR "$lhs canonical >= $normalized\n";
-  $self->_set_canonical($normalized);
-  return;
+  return $normalized;
 }
 
 sub _remove_dot_segments {
   my ($self, $input) = @_;
 
-  my $i = 0;
+  # my $rule_id = $Marpa::R2::Context::rule;
+  # my $slg     = $Marpa::R2::Context::slg;
+  # my ($lhs, @rhs) = map { $slg->symbol_display_form($_) } $slg->rule_expand($rule_id);
+  # print STDERR "$lhs ::= @rhs\n";
+
   #
   # 1.  The input buffer is initialized with the now-appended path
   # components and the output buffer is initialized to the empty
   # string.
   #
   my $output = '';
-  my $step = ++$i;
-  my $substep = '';
-  printf STDERR "%-10s %-30s %-30s\n", "STEP", "OUTPUT BUFFER", "INPUT BUFFER";
-  printf STDERR "%-10s %-30s %-30s\n", "$step$substep", $output, $input;
+
+  # my $i = 0;
+  # my $step = ++$i;
+  # my $substep = '';
+  # printf STDERR "%-10s %-30s %-30s\n", "STEP", "OUTPUT BUFFER", "INPUT BUFFER";
+  # printf STDERR "%-10s %-30s %-30s\n", "$step$substep", $output, $input;
+  # $step = ++$i;
   #
   # 2.  While the input buffer is not empty, loop as follows:
   #
-  $step = ++$i;
   while (length($input)) {
     #
     # A. If the input buffer begins with a prefix of "../" or "./",
@@ -328,11 +316,11 @@ sub _remove_dot_segments {
     #
     if (index($input, '../') == 0) {
       substr($input, 0, 3, '');
-      $substep = 'A';
+      # $substep = 'A';
     }
     elsif (index($input, './') == 0) {
       substr($input, 0, 2, '');
-      $substep = 'A';
+      # $substep = 'A';
     }
     #
     # B. if the input buffer begins with a prefix of "/./" or "/.",
@@ -341,11 +329,11 @@ sub _remove_dot_segments {
     #
     elsif (index($input, '/./') == 0) {
       substr($input, 0, 3, '/');
-      $substep = 'B';
+      # $substep = 'B';
     }
     elsif ($input =~ /^\/\.(?:[\/]|\z)/) {            # Take care this can confuse the other test on '/../ or '/..'
       substr($input, 0, 2, '/');
-      $substep = 'B';
+      # $substep = 'B';
     }
     #
     # C. if the input buffer begins with a prefix of "/../" or "/..",
@@ -357,12 +345,12 @@ sub _remove_dot_segments {
     elsif (index($input, '/../') == 0) {
       substr($input, 0, 4, '/');
       $output =~ s/\/?[^\/]*\z//;
-      $substep = 'C';
+      # $substep = 'C';
     }
     elsif ($input =~ /^\/\.\.(?:[^\/]|\z)/) {
       substr($input, 0, 3, '/');
       $output =~ s/\/?[^\/]*\z//;
-      $substep = 'C';
+      # $substep = 'C';
     }
     #
     # D. if the input buffer consists only of "." or "..", then remove
@@ -370,7 +358,7 @@ sub _remove_dot_segments {
     #
     elsif (($input eq '.') || ($input eq '..')) {
       $input = '';
-      $substep = 'D';
+      # $substep = 'D';
     }
     #
     # E. move the first path segment in the input buffer to the end of
@@ -383,9 +371,9 @@ sub _remove_dot_segments {
     else {
       $input =~ /^\/?([^\/]*)/;                            # This will always match
       $output .= substr($input, $-[0], $+[0] - $-[0], ''); # Note that perl has no problem saying length is zero
-      $substep = 'E';
+      # $substep = 'E';
     }
-    printf STDERR "%-10s %-30s %-30s\n", "$step$substep", $output, $input;
+    # printf STDERR "%-10s %-30s %-30s\n", "$step$substep", $output, $input;
   }
   #
   # 3. Finally, the output buffer is returned as the result of
@@ -402,26 +390,25 @@ sub BUILDARGS {
 
 sub BUILD {
   my ($self) = @_;
-  $self->_parse;
+  $self->_parse(0);
   return;
 }
 
 sub _trigger_value {
   my ($self, $value) = @_;
-  $self->_parse;
+  $self->_parse(0);
   return;
 }
 
 sub _parse {
-  my ($self) = @_;
-  $self->_clear_canonical;
+  my ($self, $normalize) = @_;
   #
   # This hack just to avoid recursivity: we do not want Marpa to
   # call another new() but operate on our instance immediately
   #
-  local $MarpaX::RFC::RFC3986::SELF = $self;
-  $self->grammar->parse(\$self->value, { ranking_method => 'high_rule_only' });
-  return;
+  local $MarpaX::RFC::RFC3986::SELF      = $self;
+  local $MarpaX::RFC::RFC3986::NORMALIZE = $normalize;
+  return $self->grammar->parse(\$self->value, { ranking_method => 'high_rule_only' });
 }
 
 sub is_absolute {
@@ -436,7 +423,7 @@ sub is_absolute {
 #
 # Grammar rules
 #
-sub _marpa_concat        { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set__concat       (join('', @_));             }
+sub _marpa_concat        { shift; my $self = $MarpaX::RFC::RFC3986::SELF; my $concat = join('', @_); return $MarpaX::RFC::RFC3986::NORMALIZE ? $self->_normalize($concat) : $concat; }
 sub _marpa_scheme        { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_scheme        ($self->_marpa_concat(@_)); }
 sub _marpa_authority     { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_authority     ($self->_marpa_concat(@_)); }
 sub _marpa_path          { shift; my $self = $MarpaX::RFC::RFC3986::SELF; return $self->_set_path          ($self->_marpa_concat(@_)); }
