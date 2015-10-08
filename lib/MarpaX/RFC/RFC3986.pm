@@ -194,11 +194,19 @@ has ip_literal    => (is => 'ro', isa => Str|Undef,     default => undef,      w
 has zoneid        => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_zoneid' );
 has ipv4address   => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_ipv4address');
 has reg_name      => (is => 'ro', isa => Str|Undef,     default => undef,      writer => '_set_reg_name');
-has canonical     => (is => 'rwp', isa => Str, clearer => 1);   # Will be automatically setted via BUILD
+has canonical     => (is => 'rwp', isa => Str, clearer => 1);             # Will be automatically setted via BUILD
+has _last_canonical => (is => 'rw', isa => HashRef[Str],
+                        handles_via => 'Hash',
+                        handles => {
+                                    _get_last_canonical => 'get',
+                                    _clear_last_canonical => 'clear'
+                                   }
+                       );                 # Will be automatically setted via BUILD
 
 sub _clear_canonical {
   my ($self) = @_;
   $self->_set_canonical('');
+  $self->_last_canonical({});
 }
 
 #
@@ -226,14 +234,14 @@ has _protocol_normalization => (is => 'rw', isa => HashRef[CodeRef], default => 
                                );
 
 sub _trigger__concat {
-  my ($self, @parts) = @_;
-
-  my $string = join('', @parts);   # ==> can never be undef
-  my $normalized;
+  my ($self, $string) = @_;
 
   my $rule_id = $Marpa::R2::Context::rule;
   my $slg     = $Marpa::R2::Context::slg;
   my ($lhs, @rhs) = map { $slg->symbol_display_form($_) } $slg->rule_expand($rule_id);
+
+  print STDERR "$lhs ::= @rhs\n";
+  my $normalized = join('', map {$self->_get_last_canonical($_)} @rhs);
 
   if ($lhs eq '<pct encoded>') {
     #
@@ -243,7 +251,7 @@ sub _trigger__concat {
     # triplet (e.g., "%3a" versus "%3A") are case-insensitive and therefore
     # should be normalized to use uppercase letters for the digits A-F.
     #
-    $normalized = uc($string);
+    $normalized = uc($normalized);
     #
     # 6.2.2.2.  Percent-Encoding Normalization
     # ----------------------------------------
@@ -273,56 +281,58 @@ sub _trigger__concat {
     # URI normalizers should remove dot-segments by applying the
     # remove_dot_segments algorithm to the path
     #
-    $normalized = $self->_remove_dot_segments($string);
-  } else {
-    $normalized = $string;
+    $normalized = $self->_remove_dot_segments($normalized);
   }
   if ($self->_exists_scheme_normalization($lhs)) {
     #
     # 6.2.3.  Scheme-Based Normalization
     #
     my $codeRef = $self->_get_scheme_normalization($lhs);
-    $normalized = $self->$codeRef($string);
+    $normalized = $self->$codeRef($normalized);
   }
   if ($self->_exists_protocol_normalization($lhs)) {
     #
     # 6.2.4.  Protocol-Based Normalization
     #
     my $codeRef = $self->_get_protocol_normalization($lhs);
-    $normalized = $self->$codeRef($string);
+    $normalized = $self->$codeRef($normalized);
   }
 
-  return $self->_set_canonical($normalized);
+  print STDERR "$lhs canonical >= $normalized\n";
+  $self->_set_canonical($normalized);
+  return;
 }
 
 sub _remove_dot_segments {
   my ($self, $input) = @_;
+
+  my $i = 0;
   #
   # 1.  The input buffer is initialized with the now-appended path
   # components and the output buffer is initialized to the empty
   # string.
   #
   my $output = '';
+  my $step = ++$i;
+  my $substep = '';
+  printf STDERR "%-10s %-30s %-30s\n", "STEP", "OUTPUT BUFFER", "INPUT BUFFER";
+  printf STDERR "%-10s %-30s %-30s\n", "$step$substep", $output, $input;
   #
   # 2.  While the input buffer is not empty, loop as follows:
   #
-  my $i = 0;
-  printf STDERR "%-10s %-30s %-30s\n", "STEP", "OUTPUT BUFFER", "INPUT BUFFER";
-  my $step = ++$i;
+  $step = ++$i;
   while (length($input)) {
-    printf STDERR "%-10s %-30s %-30s\n", $step, $output, $input;
-    $step = ++$i;
     #
     # A. If the input buffer begins with a prefix of "../" or "./",
     #    then remove that prefix from the input buffer; otherwise,
     #
     if (index($input, '../') == 0) {
       substr($input, 0, 3, '');
-      $step .= 'A';
+      $substep = 'A';
     }
     elsif (index($input, './') == 0) {
       substr($input, 0, 2, '');
-      $step .= 'A';
+      $substep = 'A';
     }
     #
     # B. if the input buffer begins with a prefix of "/./" or "/.",
@@ -331,11 +341,11 @@ sub _remove_dot_segments {
     #
     elsif (index($input, '/./') == 0) {
       substr($input, 0, 3, '/');
-      $step .= 'B';
+      $substep = 'B';
     }
-    elsif ($input =~ /^\/\.(?:[^\/]|\z)/) {            # Take care this can confuse the other test on '/../ or '/..'
+    elsif ($input =~ /^\/\.(?:[\/]|\z)/) {            # Take care this can confuse the other test on '/../ or '/..'
       substr($input, 0, 2, '/');
-      $step .= 'B';
+      $substep = 'B';
     }
     #
     # C. if the input buffer begins with a prefix of "/../" or "/..",
@@ -347,12 +357,12 @@ sub _remove_dot_segments {
     elsif (index($input, '/../') == 0) {
       substr($input, 0, 4, '/');
       $output =~ s/\/?[^\/]*\z//;
-      $step .= 'C';
+      $substep = 'C';
     }
     elsif ($input =~ /^\/\.\.(?:[^\/]|\z)/) {
       substr($input, 0, 3, '/');
       $output =~ s/\/?[^\/]*\z//;
-      $step .= 'C';
+      $substep = 'C';
     }
     #
     # D. if the input buffer consists only of "." or "..", then remove
@@ -360,7 +370,7 @@ sub _remove_dot_segments {
     #
     elsif (($input eq '.') || ($input eq '..')) {
       $input = '';
-      $step .= 'D';
+      $substep = 'D';
     }
     #
     # E. move the first path segment in the input buffer to the end of
@@ -373,8 +383,9 @@ sub _remove_dot_segments {
     else {
       $input =~ /^\/?([^\/]*)/;                            # This will always match
       $output .= substr($input, $-[0], $+[0] - $-[0], ''); # Note that perl has no problem saying length is zero
-      $step .= 'E';
+      $substep = 'E';
     }
+    printf STDERR "%-10s %-30s %-30s\n", "$step$substep", $output, $input;
   }
   #
   # 3. Finally, the output buffer is returned as the result of
