@@ -15,31 +15,31 @@ inaccessible is ok by default
 :default ::= action => MarpaX::RFC::RFC3986::_marpa_concat
 :start ::= <URI reference>
 
-<URI>         ::= <scheme> ':' <hier part> '?' <query> '#' <fragment>
-                | <scheme> ':' <hier part> '?' <query>
-                | <scheme> ':' <hier part>             '#' <fragment>
-                | <scheme> ':' <hier part>
+<URI>         ::= <scheme> ':' <hier part> '?' <query> '#' <fragment>   action => MarpaX::RFC::RFC3986::_marpa_URI
+                | <scheme> ':' <hier part> '?' <query>                  action => MarpaX::RFC::RFC3986::_marpa_URI
+                | <scheme> ':' <hier part>             '#' <fragment>   action => MarpaX::RFC::RFC3986::_marpa_URI
+                | <scheme> ':' <hier part>                              action => MarpaX::RFC::RFC3986::_marpa_URI
 
 <hier part>     ::= '//' <authority> <path abempty>                     action => MarpaX::RFC::RFC3986::_marpa_hier_part
                   | <path absolute>                                     action => MarpaX::RFC::RFC3986::_marpa_hier_part
                   | <path rootless>                                     action => MarpaX::RFC::RFC3986::_marpa_hier_part
                   | <path empty>                                        action => MarpaX::RFC::RFC3986::_marpa_hier_part
 
-<URI reference> ::= <URI>
-                  | <relative ref>
+<URI reference> ::= <URI>                                               action => MarpaX::RFC::RFC3986::_marpa_URI_reference
+                  | <relative ref>                                      action => MarpaX::RFC::RFC3986::_marpa_URI_reference
 
 <absolute URI>  ::= <scheme> ':' <hier part> '?' <query>
                   | <scheme> ':' <hier part>
 
-<relative ref>  ::= <relative part> '?' <query> '#' <fragment>
-                  | <relative part> '?' <query>
-                  | <relative part>             '#' <fragment>
-                  | <relative part>
+<relative ref>  ::= <relative part> '?' <query> '#' <fragment>          action => MarpaX::RFC::RFC3986::_marpa_relative_ref
+                  | <relative part> '?' <query>                         action => MarpaX::RFC::RFC3986::_marpa_relative_ref
+                  | <relative part>             '#' <fragment>          action => MarpaX::RFC::RFC3986::_marpa_relative_ref
+                  | <relative part>                                     action => MarpaX::RFC::RFC3986::_marpa_relative_ref
 
-<relative part> ::= '//' <authority> <path abempty>                    action => MarpaX::RFC::RFC3986::_marpa_relative_part
-                  | <path absolute>                                    action => MarpaX::RFC::RFC3986::_marpa_relative_part
-                  | <path noscheme>                                    action => MarpaX::RFC::RFC3986::_marpa_relative_part
-                  | <path empty>                                       action => MarpaX::RFC::RFC3986::_marpa_relative_part
+<relative part> ::= '//' <authority> <path abempty>                     action => MarpaX::RFC::RFC3986::_marpa_relative_part
+                  | <path absolute>                                     action => MarpaX::RFC::RFC3986::_marpa_relative_part
+                  | <path noscheme>                                     action => MarpaX::RFC::RFC3986::_marpa_relative_part
+                  | <path empty>                                        action => MarpaX::RFC::RFC3986::_marpa_relative_part
 
 <scheme trailer unit> ::= ALPHA | DIGIT | [+-.]
 <scheme header>       ::= ALPHA
