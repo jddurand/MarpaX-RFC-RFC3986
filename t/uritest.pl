@@ -1,4 +1,11 @@
 #!perl -T
+
+# ABSTRACT: Uniform Resource Identifier (URI): Generic Syntax - test suite
+
+# VERSION
+
+# AUTHORITY
+
 use strict;
 use warnings FATAL => 'all';
 use Test::More tests => 14;
@@ -33,7 +40,7 @@ foreach (@URI_ABSOLUTE_TEST) {
 
 foreach (@URI_CANONICAL_TEST) {
   my $got;
-  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->canonical) eq $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->canonical returned "' . $got . '" eq "' . $_->[1] . '" ?');
+  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->canonical) eq $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->canonical returned "' . _safePrint($got) . '" eq "' . _safePrint($_->[1]) . '" ?');
 }
 
 sub _safePrint {
