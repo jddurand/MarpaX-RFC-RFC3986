@@ -8,7 +8,6 @@ package MarpaX::RFC::RFC3986;
 
 use Moo;
 use MarpaX::RFC::RFC3986::BNF;
-use MooX::ClassAttribute;
 use MooX::Role::Parameterized::With 'MarpaX::Role::Parameterized::ResourceIdentifier'
   => {
       BNF_section_data => MarpaX::RFC::RFC3986::BNF->section_data('BNF')
