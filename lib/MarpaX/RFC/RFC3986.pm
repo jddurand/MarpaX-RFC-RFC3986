@@ -168,6 +168,8 @@ L<Representing IPv6 Zone Identifiers in Address Literals and Uniform Resource Id
 
 L<URI Design and Ownership|http://tools.ietf.org/html/rfc7320>
 
+L<MarpaX::Role::Parameterized::ResourceIdentifier>
+
 =cut
 
 1;
