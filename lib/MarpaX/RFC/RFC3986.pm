@@ -1,16 +1,18 @@
 package MarpaX::RFC::RFC3986;
-use Moo;
-use MarpaX::RFC::RFC3986::BNF;
-use MooX::Role::Parameterized::With 'MarpaX::Role::Parameterized::ResourceIdentifier'
-  => {
-      BNF_section_data => MarpaX::RFC::RFC3986::BNF->section_data('BNF')
-     };
 
 # ABSTRACT: Uniform Resource Identifier (URI): Generic Syntax - Marpa Parser
 
 # VERSION
 
 # AUTHORITY
+
+use Moo;
+use MarpaX::RFC::RFC3986::BNF;
+use MooX::ClassAttribute;
+use MooX::Role::Parameterized::With 'MarpaX::Role::Parameterized::ResourceIdentifier'
+  => {
+      BNF_section_data => MarpaX::RFC::RFC3986::BNF->section_data('BNF')
+     };
 
 # References: RFC 3986       URI                                     http://tools.ietf.org/html/rfc3986
 #             RFC 6874       IPv6 Zone Identifiers                   http://tools.ietf.org/html/rfc6874
