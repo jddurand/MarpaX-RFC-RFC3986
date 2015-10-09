@@ -28,12 +28,12 @@ our @URI_CANONICAL_TEST = (
 
 foreach (@URI_ABSOLUTE_TEST) {
   my $got;
-  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->is_absolute) == $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->is_absolute returns ' . $_->[1] . " == $got ?");
+  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->is_absolute) == $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->is_absolute returned ' . int($got) . ' == ' . $_->[1] . ' ?');
 }
 
 foreach (@URI_CANONICAL_TEST) {
   my $got;
-  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->canonical) eq $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->canonical returns ' . $_->[1] . " eq $got ?");
+  ok(($got = MarpaX::RFC::RFC3986->new($_->[0])->canonical) eq $_->[1], 'MarpaX::RFC::RFC3986->new->("' . _safePrint($_->[0]) . '")->canonical returned "' . $got . '" eq "' . $_->[1] . '" ?');
 }
 
 sub _safePrint {
